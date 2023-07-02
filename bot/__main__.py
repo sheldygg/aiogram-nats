@@ -23,7 +23,7 @@ async def worker(bot: Bot, js: JetStreamContext, storage: ObjectStore):
     while True:
         try:
             msg = await sub.next_msg()
-            print(msg)
+            logging.info(f"msg from worker, {msg}")
             storage_info = await storage.get(name=msg.headers["uid_key"])
             await bot.send_photo(
                 chat_id=int(msg.headers["user_id"]),
@@ -31,7 +31,7 @@ async def worker(bot: Bot, js: JetStreamContext, storage: ObjectStore):
             )
             await msg.ack()
         except TimeoutError:
-            print("bot timeout")
+            logging.info("bot timeout")
 
 
 async def get_photo(m: Message, bot: Bot, storage: ObjectStore, js: JetStreamContext):

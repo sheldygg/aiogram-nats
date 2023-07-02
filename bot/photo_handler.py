@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from io import BytesIO
 from uuid import uuid4
@@ -23,6 +24,9 @@ def process_photo(image_bytes: bytes):
     return buff.read()
 
 
+logging.basicConfig(level=logging.INFO)
+
+
 async def main():
     nc = await connect()
     js = nc.jetstream()
@@ -32,7 +36,7 @@ async def main():
     while True:
         try:
             msg = await sub.next_msg()
-            print(msg)
+            logging.info(f"msg from bot, {msg}")
             storage_info = await storage.get(name=msg.headers["uid_key"])
             processed_photo = process_photo(storage_info.data)
             uid_key = uuid4().hex
@@ -44,8 +48,8 @@ async def main():
             )
             await js.publish("bot.photo.converter.out", headers=headers)
             await msg.ack()
-            print("ask")
+            logging.info("ask")
         except TimeoutError:
-            print("timeout")
+            logging.info("worker timeout")
 
 asyncio.run(main())
