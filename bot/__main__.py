@@ -29,6 +29,7 @@ async def worker(bot: Bot, js: JetStreamContext, storage: ObjectStore):
                 chat_id=int(msg.headers["user_id"]),
                 photo=BufferedInputFile(storage_info.data, filename="filename.jpg"),
             )
+            await storage.delete(name=msg.headers["uid_key"])
             await msg.ack()
         except TimeoutError:
             logging.info("bot timeout")

@@ -35,6 +35,7 @@ async def main():
             logging.info(f"msg from bot, {msg}")
             storage_info = await storage.get(name=msg.headers["uid_key"])
             processed_photo = process_photo(storage_info.data)
+            await storage.delete(name=msg.headers["uid_key"])
             uid_key = uuid4().hex
             await asyncio.sleep(5)
             headers = {"uid_key": uid_key, "user_id": msg.headers["user_id"]}
