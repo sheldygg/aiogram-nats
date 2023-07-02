@@ -12,14 +12,10 @@ from nats.errors import TimeoutError
 def process_photo(image_bytes: bytes):
     image = Image.open(BytesIO(image_bytes))
     d1 = ImageDraw.Draw(image)
-    font = ImageFont.truetype('roboto.ttf', 40)
-    d1.text(
-        xy=(10, 10),
-        text="XYI",
-        font=font,
-        fill=(255, 0, 0))
+    font = ImageFont.truetype("roboto.ttf", 40)
+    d1.text(xy=(10, 10), text="XYI", font=font, fill=(255, 0, 0))
     buff = BytesIO()
-    image.save(buff, format='JPEG')
+    image.save(buff, format="JPEG")
     buff.seek(0)
     return buff.read()
 
@@ -51,5 +47,6 @@ async def main():
             logging.info("ask")
         except TimeoutError:
             logging.info("worker timeout")
+
 
 asyncio.run(main())
