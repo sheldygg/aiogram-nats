@@ -1,4 +1,4 @@
-## Configurin Nats
+## Configure Nats
 You must create the first stream for the worker with this subject `bot.photo.converter.in`
 
 And one more for a bot with such a subject
