@@ -4,9 +4,10 @@ You must create the first stream for the worker with this subject `bot.photo.con
 And one more for a bot with such a subject
 `bot.photo.converter.out`
 
+And two ObjectStorages `photo`, `ready_photos`
+
 To do that you can use that repository
 
-And two ObjectStorages `photo`, `ready_photos`
 
 https://github.com/Vermilonik/HowCreateStreamAndConsumerNats
 
