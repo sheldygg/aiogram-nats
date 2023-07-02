@@ -1,7 +1,15 @@
-need two streams with subjects
+## Configurin Nats
+You must create the first stream for the worker with this subject `bot.photo.converter.in`
 
-bot.photo.converter.in
+And one more for a bot with such a subject
+`bot.photo.converter.out`
 
-and
+To do that you can use that repository
+https://github.com/Vermilonik/HowCreateStreamAndConsumerNats
 
-bot.photo.converter.out
+
+# Start
+
+Run Bot `python -m bot`
+
+Run Worker `python bot\photo_handler.py`
