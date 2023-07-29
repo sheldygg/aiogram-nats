@@ -1,38 +1,29 @@
 import asyncio
 import logging
-
+from functools import partial
 from uuid import uuid4
 
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import BufferedInputFile, Message
 from nats import connect
+from nats.aio.msg import Msg
 from nats.js.client import JetStreamContext
 from nats.js.object_store import ObjectStore
-from nats.errors import TimeoutError
-
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message
-from aiogram.types import BufferedInputFile
 
 from bot.config_reader import Settings
-
 
 logging.basicConfig(level=logging.INFO)
 
 
-async def worker(bot: Bot, js: JetStreamContext, storage: ObjectStore):
-    sub = await js.subscribe("bot.photo.converter.out")
-    while True:
-        try:
-            msg = await sub.next_msg()
-            logging.info(f"msg from worker, {msg}")
-            storage_info = await storage.get(name=msg.headers["uid_key"])
-            await bot.send_photo(
-                chat_id=int(msg.headers["user_id"]),
-                photo=BufferedInputFile(storage_info.data, filename="filename.jpg"),
-            )
-            await storage.delete(name=msg.headers["uid_key"])
-            await msg.ack()
-        except TimeoutError:
-            logging.info("bot timeout")
+async def worker(msg: Msg, bot: Bot, storage: ObjectStore):
+    logging.info(f"msg from worker, {msg}")
+    storage_info = await storage.get(name=msg.headers["uid_key"])
+    await bot.send_photo(
+        chat_id=int(msg.headers["user_id"]),
+        photo=BufferedInputFile(storage_info.data, filename="filename.jpg"),
+    )
+    await storage.delete(name=msg.headers["uid_key"])
+    await msg.ack()
 
 
 async def get_photo(m: Message, bot: Bot, storage: ObjectStore, js: JetStreamContext):
@@ -44,7 +35,11 @@ async def get_photo(m: Message, bot: Bot, storage: ObjectStore, js: JetStreamCon
     )
     await js.publish(
         subject="bot.photo.converter.in",
-        headers={"user_id": str(m.from_user.id), "uid_key": uid_key},
+        headers={
+            "user_id": str(m.from_user.id),
+            "uid_key": uid_key,
+            "Nats-Msg-Id": uid_key,
+        },
     )
 
 
@@ -62,9 +57,14 @@ async def main() -> None:
     storage = await js.object_store("photos")
     storage_ready = await js.object_store("ready_photos")
     dp.message.register(get_photo, F.photo)
-    await asyncio.gather(
-        worker(bot, js, storage_ready), dp.start_polling(bot, storage=storage, js=js)
+    sub = await js.subscribe(
+        "bot.photo.converter.out",
+        cb=partial(worker, bot=bot, storage=storage_ready),
     )
+    try:
+        await dp.start_polling(bot, storage=storage, js=js)
+    finally:
+        await sub.unsubscribe()
 
 
 if __name__ == "__main__":
